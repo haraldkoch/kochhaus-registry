@@ -5,6 +5,7 @@ resources:
   - emberstack.yaml
   - external-dns.yaml
   - hajimari.yaml
+  - harbor.yaml
   - ingress-nginx.yaml
   - jetstack.yaml
   - k8s-at-home.yaml

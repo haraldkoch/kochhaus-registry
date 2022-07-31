@@ -2,7 +2,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: external-dns
+  name: internal-dns
   namespace: networking
 spec:
   interval: 15m
@@ -14,7 +14,6 @@ spec:
         kind: HelmRepository
         name: external-dns
         namespace: flux-system
-      interval: 15m
   install:
     createNamespace: true
     remediation:
@@ -22,31 +21,38 @@ spec:
   upgrade:
     remediation:
       retries: 5
+
   values:
+    nameOverride: internal-dns
+
     interval: 5m
-    logLevel: debug
-    provider: cloudflare
-    env:
-      - name: CF_API_EMAIL
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-cloud-credentials
-            key: email
-      - name: CF_API_KEY
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-cloud-credentials
-            key: api-key
+    logLevel: info
+    provider: rfc2136
     extraArgs:
-      - --cloudflare-proxied
-      - --annotation-filter=external-dns/is-public in (true)
+      - --rfc2136-host=${PRIVATE_DNS_PRIMARY}
+      - --rfc2136-port=53
+      - --rfc2136-zone=${SECRET_DOMAIN}
+      - --rfc2136-min-ttl=0s
+      - --rfc2136-tsig-axfr
+      - --rfc2136-tsig-keyname=externaldns
+      - --rfc2136-tsig-secret-alg=hmac-sha256
+    env:
+      - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: internal-dns
+            key: rfc2136_tsig_secret
     policy: sync
     sources:
+      - service
       - ingress
-    txtPrefix: "k8s."
-    txtOwnerId: "default"
+    txtOwnerId: "harbor"
     domainFilters:
       - "${SECRET_DOMAIN}"
+
+    podAnnotations:
+      secret.reloader.stakater.com/reload: internal-dns
+
     resources:
       requests:
         memory: 100Mi
