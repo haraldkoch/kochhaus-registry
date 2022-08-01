@@ -5,10 +5,10 @@
   "dependencyDashboardTitle": "Renovate Dashboard",
   "suppressNotifications": ["prIgnoreNotification"],
   "rebaseWhen": "conflicted",
-  "schedule": ["every weekend"],
   "pre-commit": {
     "enabled": true
   },
+  "timezone": "America/Toronto",
   "flux": {
     "fileMatch": ["cluster/.+\\.ya?ml$"]
   },
