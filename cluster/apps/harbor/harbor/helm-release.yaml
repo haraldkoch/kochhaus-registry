@@ -29,7 +29,7 @@ spec:
       ingress:
         className: nginx
         hosts:
-          core: harbor2.${SECRET_DOMAIN}
+          core: harbor.${SECRET_DOMAIN}
         annotations:
           ingress.kubernetes.io/ssl-redirect: "true"
           ingress.kubernetes.io/proxy-body-size: "0"
@@ -41,7 +41,7 @@ spec:
             # 64MiB
             memrequestbodybytes: 67108864
           nginx.ingress.kubernetes.io/client_max_body_size: "2147483648"
-    externalURL: https://harbor2.${SECRET_DOMAIN}
+    externalURL: https://harbor.${SECRET_DOMAIN}
     ipFamily:
       ipv6:
         enabled: false
