@@ -48,3 +48,6 @@ spec:
     harborAdminPassword: "${SECRET_HARBOR_ADMIN_PASSWORD}"
     # The secret key used for encryption. Must be a string of 16 chars.
     secretKey: "${SECRET_HARBOR_ENCRPYTION_KEY}"
+
+    notary:
+      enabled: false
