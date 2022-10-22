@@ -42,20 +42,26 @@ spec:
           secretKeyRef:
             name: internal-dns
             key: rfc2136_tsig_secret
-    policy: sync
-    sources:
-      - service
-      - ingress
-    txtOwnerId: "harbor"
-    domainFilters:
-      - "${SECRET_DOMAIN}"
 
     podAnnotations:
       secret.reloader.stakater.com/reload: internal-dns
 
+    policy: sync
+    sources:
+      - service
+      - ingress
+
+    domainFilters:
+      - "${SECRET_DOMAIN}"
+
+    txtOwnerId: "harbor"
+
+    logLevel: info
+
     resources:
       requests:
-        memory: 100Mi
         cpu: 25m
+        memory: 50Mi
       limits:
-        memory: 250Mi
+        cpu: 50m
+        memory: 100Mi
