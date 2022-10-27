@@ -56,8 +56,6 @@ spec:
 
     txtOwnerId: "harbor"
 
-    logLevel: info
-
     resources:
       requests:
         cpu: 25m
