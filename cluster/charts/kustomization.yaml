@@ -4,6 +4,7 @@ resources:
   - bitnami.yaml
   - bjw-s.yaml
   - calico.yaml
+  - coredns.yaml
   - emberstack.yaml
   - external-dns.yaml
   - hajimari.yaml
