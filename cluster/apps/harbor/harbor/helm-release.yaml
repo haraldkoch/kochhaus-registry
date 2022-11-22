@@ -21,26 +21,30 @@ spec:
   upgrade:
     remediation:
       retries: 5
+  postRenderers:
+    - kustomize:
+        patchesJson6902:
+          - target:
+              kind: Service
+              name: harbor
+            patch:
+              - op: add
+                path: /spec/externalIPs
+                value: ["${SECRET_EXTERNAL_IP}"]
+              - op: remove
+                path: /spec/loadBalancerIP
   values:
     expose:
-      type: ingress
+      type: loadBalancer
       tls:
-        certSource: none
-      ingress:
-        className: nginx
-        hosts:
-          core: harbor.${SECRET_DOMAIN}
+        certSource: auto
+        auto:
+          commonName: "harbor.${SECRET_DOMAIN}"
+      loadBalancer:
+        name: harbor
+        IP: "${SECRET_EXTERNAL_IP}"
         annotations:
-          ingress.kubernetes.io/ssl-redirect: "true"
-          ingress.kubernetes.io/proxy-body-size: "0"
-          nginx.ingress.kubernetes.io/ssl-redirect: "true"
-          nginx.ingress.kubernetes.io/proxy-body-size: "0"
-          traefik.ingress.kubernetes.io/buffering: |
-            # 2GiB
-            maxrequestbodybytes: 2147483648
-            # 64MiB
-            memrequestbodybytes: 67108864
-          nginx.ingress.kubernetes.io/client_max_body_size: "2147483648"
+          external-dns.alpha.kubernetes.io/hostname: "harbor.${SECRET_DOMAIN}"
     externalURL: https://harbor.${SECRET_DOMAIN}
     ipFamily:
       ipv6:
