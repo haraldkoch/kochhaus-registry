@@ -39,6 +39,7 @@ spec:
     # here: https://projectcalico.docs.tigera.io/reference/installation/api#operator.tigera.io/v1.InstallationSpec
     installation:
       enabled: true
+      controlPlaneReplicas: 1
       # Configures Calico networking.
       calicoNetwork:
         # Note: The ipPools section cannot be modified post-install.
