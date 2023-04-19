@@ -33,13 +33,14 @@ _Additional applications include [hajimari](https://github.com/toboshii/hajimari
 
 For provisioning the following tools will be used:
 
-- [Fedora 36 Server](https://getfedora.org/en/server/download/) - Universal operating system that supports running all kinds of home related workloads in Kubernetes and has a faster release cycle
-- [Ansible](https://www.ansible.com) - Provision Fedora Server and install k3s
-- [Terraform](https://www.terraform.io) - Provision an already existing Cloudflare domain and certain DNS records to be used with your k3s cluster
+- [Ansible](https://www.ansible.com) - Sets up the operating system and installs k3s
+- [Terraform](https://www.terraform.io) - Provisions an existing Cloudflare domain and certain DNS records to be used with your Kubernetes cluster
 
 ## 📝 Prerequisites
 
 **Note:** _This template has not been tested on cloud providers like AWS EC2, Hetzner, Scaleway etc... Those cloud offerings probably have a better way of provsioning a Kubernetes cluster and it's advisable to use those instead of the Ansible playbooks included here. This repository can still be tweaked for the GitOps/Flux portion if there's a cluster working in one those environments._
+
+First and foremost some experience in debugging/troubleshooting problems **and a positive attitude is required** ;)
 
 ### 📚 Reading material
 
@@ -47,33 +48,54 @@ For provisioning the following tools will be used:
 
 ### 💻 Systems
 
-- One or more nodes with a fresh install of [Fedora Server 36](https://getfedora.org/en/server/download/).
+- One or more nodes with a fresh install of [Fedora Server 37](https://getfedora.org/en/server/download/) or [Ubuntu 22.04 Server](https://ubuntu.com/download/server) (not minimal).
   - These nodes can be ARM64/AMD64 bare metal or VMs.
   - An odd number of control plane nodes, greater than or equal to 3 is required if deploying more than one control plane node.
 - A [Cloudflare](https://www.cloudflare.com/) account with a domain, this will be managed by Terraform and external-dns. You can [register new domains](https://www.cloudflare.com/products/registrar/) directly thru Cloudflare.
-- Some experience in debugging problems and a positive attitude ;)
 
 📍 It is recommended to have 3 master nodes for a highly available control plane.
+
+## 📂 Repository structure
+
+The Git repository contains the following directories under `kubernetes` and are ordered below by how Flux will apply them.
+
+```sh
+📁 kubernetes      # Kubernetes cluster defined as code
+├─📁 bootstrap     # Flux installation
+├─📁 flux          # Main Flux configuration of repository
+└─📁 apps          # Apps deployed into the cluster grouped by namespace
+```
+
+## 🚀 Lets go
+
+Very first step will be to create a new **public** repository by clicking the big green **Use this template** button on this page.
+
+Clone **your new repo** to you local workstation and `cd` into it.
+
+📍 **All of the below commands** are run on your **local** workstation, **not** on any of your cluster nodes.
 
 ### 🔧 Workstation Tools
 
 📍 Install the **most recent version** of the CLI tools below. If you are **having trouble with future steps**, it is very likely you don't have the most recent version of these CLI tools, **!especially sops AND yq!**.
 
-1. Install the following CLI tools on your workstation, if you are using [Homebrew](https://brew.sh/) on MacOS or Linux skip to steps 3 and 4.
+1. Install the following CLI tools on your workstation, if you are **NOT** using [Homebrew](https://brew.sh/) on MacOS or Linux **ignore** steps 4 and 5.
 
-    * Required: [age](https://github.com/FiloSottile/age), [ansible](https://www.ansible.com), [flux](https://toolkit.fluxcd.io/), [go-task](https://github.com/go-task/task), [ipcalc](http://jodies.de/ipcalc), [jq](https://stedolan.github.io/jq/), [kubectl](https://kubernetes.io/docs/tasks/tools/), [pre-commit](https://github.com/pre-commit/pre-commit), [sops](https://github.com/mozilla/sops), [terraform](https://www.terraform.io), [yq v4](https://github.com/mikefarah/yq)
+    * Required: [age](https://github.com/FiloSottile/age), [ansible](https://www.ansible.com), [flux](https://toolkit.fluxcd.io/), [weave-gitops](https://docs.gitops.weave.works/docs/installation/weave-gitops/), [go-task](https://github.com/go-task/task), [direnv](https://github.com/direnv/direnv), [ipcalc](http://jodies.de/ipcalc), [jq](https://stedolan.github.io/jq/), [kubectl](https://kubernetes.io/docs/tasks/tools/), [python-pip3](https://pypi.org/project/pip/), [pre-commit](https://github.com/pre-commit/pre-commit), [sops v3](https://github.com/mozilla/sops), [terraform](https://www.terraform.io), [yq v4](https://github.com/mikefarah/yq)
 
-    * Recommended: [direnv](https://github.com/direnv/direnv), [helm](https://helm.sh/), [kustomize](https://github.com/kubernetes-sigs/kustomize), [prettier](https://github.com/prettier/prettier), [stern](https://github.com/stern/stern), [yamllint](https://github.com/adrienverge/yamllint)
+    * Recommended: [helm](https://helm.sh/), [kustomize](https://github.com/kubernetes-sigs/kustomize), [stern](https://github.com/stern/stern), [yamllint](https://github.com/adrienverge/yamllint)
 
 2. This guide heavily relies on [go-task](https://github.com/go-task/task) as a framework for setting things up. It is advised to learn and understand the commands it is running under the hood.
 
-3. Install [go-task](https://github.com/go-task/task) via Brew
+3. Install Python 3 and pip3 using your Linux OS package manager, or Homebrew if using MacOS.
+    - Ensure `pip3` is working on your command line by running `pip3 --version`
+
+4. [Homebrew] Install [go-task](https://github.com/go-task/task)
 
     ```sh
     brew install go-task/tap/go-task
     ```
 
-4. Install workstation dependencies via Brew
+5. [Homebrew] Install workstation dependencies
 
     ```sh
     task init
@@ -82,7 +104,6 @@ For provisioning the following tools will be used:
 ### ⚠️ pre-commit
 
 It is advisable to install [pre-commit](https://pre-commit.com/) and the pre-commit hooks that come with this repository.
-[sops-pre-commit](https://github.com/k8s-at-home/sops-pre-commit) will check to make sure you are not committing non-encrypted Kubernetes secrets to your repository.
 
 1. Enable Pre-Commit
 
@@ -95,28 +116,6 @@ It is advisable to install [pre-commit](https://pre-commit.com/) and the pre-com
     ```sh
     task precommit:update
     ```
-
-## 📂 Repository structure
-
-The Git repository contains the following directories under `cluster` and are ordered below by how Flux will apply them.
-
-```sh
-📁 cluster      # k8s cluster defined as code
-├─📁 flux       # flux, gitops operator, loaded before everything
-├─📁 crds       # custom resources, loaded before 📁 core and 📁 apps
-├─📁 charts     # helm repos, loaded before 📁 core and 📁 apps
-├─📁 config     # cluster config, loaded before 📁 core and 📁 apps
-├─📁 core       # crucial apps, namespaced dir tree, loaded before 📁 apps
-└─📁 apps       # regular apps, namespaced dir tree, loaded last
-```
-
-## 🚀 Lets go
-
-Very first step will be to create a new repository by clicking the **Use this template** button on this page.
-
-Clone the repo to you local workstation and `cd` into it.
-
-📍 **All of the below commands** are run on your **local** workstation, **not** on any of your cluster nodes.
 
 ### 🔐 Setting up Age
 
@@ -142,7 +141,7 @@ Clone the repo to you local workstation and `cd` into it.
     source ~/.bashrc
     ```
 
-4. Fill out the Age public key in the `.config.env` under `BOOTSTRAP_AGE_PUBLIC_KEY`, **note** the public key should start with `age`...
+4. Fill out the Age public key in the appropriate variable in configuration section below, **note** the public key should start with `age`...
 
 ### ☁️ Global Cloudflare API Key
 
@@ -152,7 +151,7 @@ In order to use Terraform and `cert-manager` with the Cloudflare DNS challenge y
 
 2. Under the `API Keys` section, create a global API Key.
 
-3. Use the API Key in the configuration section below.
+3. Use the API Key in the appropriate variable in configuration section below.
 
 📍 You may wish to update this later on to a Cloudflare **API Token** which can be scoped to certain resources. I do not recommend using a Cloudflare **API Key**, however for the purposes of this template it is easier getting started without having to define which scopes and resources are needed. For more information see the [Cloudflare docs on API Keys and Tokens](https://developers.cloudflare.com/api/).
 
@@ -180,11 +179,11 @@ In order to use Terraform and `cert-manager` with the Cloudflare DNS challenge y
     task configure
     ```
 
-### ⚡ Preparing Fedora Server with Ansible
+### ⚡ Preparing Fedora or Ubuntu Server with Ansible
 
-📍 Here we will be running a Ansible Playbook to prepare Fedora Server for running a Kubernetes cluster.
+📍 Here we will be running a Ansible Playbook to prepare Fedora or Ubuntu Server for running a Kubernetes cluster.
 
-📍 Nodes are not security hardened by default, you can do this with [dev-sec/ansible-collection-hardening](https://github.com/dev-sec/ansible-collection-hardening) or similar if it supports Fedora Server.
+📍 Nodes are not security hardened by default, you can do this with [dev-sec/ansible-collection-hardening](https://github.com/dev-sec/ansible-collection-hardening) or similar if supported. This is an advanced configuration and generally not recommended unless you want to [DevSecOps](https://www.ibm.com/topics/devsecops) your cluster and nodes.
 
 1. Ensure you are able to SSH into your nodes from your workstation using a private SSH key **without a passphrase**. This is how Ansible is able to connect to your remote nodes.
 
@@ -208,21 +207,21 @@ In order to use Terraform and `cert-manager` with the Cloudflare DNS challenge y
     task ansible:ping
     ```
 
-5. Run the Fedora Server Ansible prepare playbook
+5. Run the Fedora/Ubuntu Server Ansible prepare playbook
 
     ```sh
     task ansible:prepare
     ```
 
-6. Reboot the nodes
+6. Reboot the nodes (if not done in step 5)
 
     ```sh
-    task ansible:reboot
+    task ansible:force-reboot
     ```
 
 ### ⛵ Installing k3s with Ansible
 
-📍 Here we will be running a Ansible Playbook to install [k3s](https://k3s.io/) with [this](https://galaxy.ansible.com/xanmanning/k3s) wonderful k3s Ansible galaxy role. After completion, Ansible will drop a `kubeconfig` in `./provision/kubeconfig` for use with interacting with your cluster with `kubectl`.
+📍 Here we will be running a Ansible Playbook to install [k3s](https://k3s.io/) with [this](https://galaxy.ansible.com/xanmanning/k3s) wonderful k3s Ansible galaxy role. After completion, Ansible will drop a `kubeconfig` in `./kubeconfig` for use with interacting with your cluster with `kubectl`.
 
 ☢️ If you run into problems, you can run `task ansible:nuke` to destroy the k3s cluster and start over.
 
@@ -255,7 +254,7 @@ In order to use Terraform and `cert-manager` with the Cloudflare DNS challenge y
 
 ### ☁️ Configuring Cloudflare DNS with Terraform
 
-📍 Review the Terraform scripts under `./provision/terraform/cloudflare/` and make sure you understand what it's doing (no really review it).
+📍 Review the Terraform scripts under `./terraform/cloudflare/` and make sure you understand what it's doing (no really review it).
 
 If your domain already has existing DNS records **be sure to export those DNS settings before you continue**.
 
@@ -297,7 +296,7 @@ The cluster application [external-dns](https://github.com/kubernetes-sigs/extern
 
 2. Push you changes to git
 
-    📍 **Verify** all the `*.sops.yaml` and `*.sops.yml` files under the `./cluster` and `./provision` folders are **encrypted** with SOPS
+    📍 **Verify** all the `*.sops.yaml` and `*.sops.yml` files under the `./ansible`, `./kubernetes`, and `./terraform` folders are **encrypted** with SOPS
 
     ```sh
     git add -A
@@ -384,9 +383,13 @@ task cluster:resources
 
 ## 📣 Post installation
 
+### 🌱 Environment
+
+[direnv](https://direnv.net/) will make it so anytime you `cd` to your repo's directory it export the required environment variables (e.g. `KUBECONFIG`). To set this up make sure you [hook it into your shell](https://direnv.net/docs/hook.html) and after that is done, run `direnv allow` while in your repos directory.
+
 ### 🌐 DNS
 
-📍 The [external-dns](https://github.com/kubernetes-sigs/external-dns) application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` is the only public domain exposed on your Cloudflare domain. In order to make additional applications public you must set an ingress annotation like in the `HelmRelease` for `echo-server`. You do not need to use Terraform to create additional DNS records unless you need a record outside the purposes of your Kubernetes cluster (e.g. setting up MX records).
+📍 The [external-dns](https://github.com/kubernetes-sigs/external-dns) application created in the `networking` namespace will handle creating public DNS records. By default, `echo-server` and the `flux-webhook` are the only public domain exposed on your Cloudflare domain. In order to make additional applications public you must set an ingress annotation (`external-dns.alpha.kubernetes.io/target`) like done in the `HelmRelease` for `echo-server`. You do not need to use Terraform to create additional DNS records unless you need a record outside the purposes of your Kubernetes cluster (e.g. setting up MX records).
 
 [k8s_gateway](https://github.com/ori-edge/k8s_gateway) is deployed on the IP choosen for `${BOOTSTRAP_METALLB_K8S_GATEWAY_ADDR}`. Inorder to test DNS you can point your clients DNS to the `${BOOTSTRAP_METALLB_K8S_GATEWAY_ADDR}` IP address and load `https://hajimari.${BOOTSTRAP_CLOUDFLARE_DOMAIN}` in your browser.
 
@@ -398,28 +401,22 @@ To access services from the outside world port forwarded `80` and `443` in your 
 
 Now if nothing is working, that is expected. This is DNS after all!
 
-### 🔐 SSL
-
-By default in this template Kubernetes ingresses are set to use the [Let's Encrypt Staging Environment](https://letsencrypt.org/docs/staging-environment/). This will hopefully reduce issues from ACME on requesting certificates until you are ready to use this in "Production".
-
-Once you have confirmed there are no issues requesting your certificates replace `letsencrypt-staging` with `letsencrypt-production` in your ingress annotations for `cert-manager.io/cluster-issuer`
-
 ### 🤖 Renovatebot
 
 [Renovatebot](https://www.mend.io/free-developer-tools/renovate/) will scan your repository and offer PRs when it finds dependencies out of date. Common dependencies it will discover and update are Flux, Ansible Galaxy Roles, Terraform Providers, Kubernetes Helm Charts, Kubernetes Container Images, Pre-commit hooks updates, and more!
 
 The base Renovate configuration provided in your repository can be view at [.github/renovate.json5](https://github.com/onedr0p/flux-cluster-template/blob/main/.github/renovate.json5). If you notice this only runs on weekends and you can [change the schedule to anything you want](https://docs.renovatebot.com/presets-schedule/) or simply remove it.
 
-To enable Renovate on your repository, click the 'Configure' button over at their [Github app page](https://github.com/apps/renovate) and choose your repository. Over time Renovate will create PRs for out-of-date dependencies it finds. Any merged PRs that are in the cluster directory Flux will deploy.
+To enable Renovate on your repository, click the 'Configure' button over at their [Github app page](https://github.com/apps/renovate) and choose your repository. Over time Renovate will create PRs for out-of-date dependencies it finds. Any merged PRs that are in the kubernetes directory Flux will deploy.
 
 ### 🪝 Github Webhook
 
 Flux is pull-based by design meaning it will periodically check your git repository for changes, using a webhook you can enable Flux to update your cluster on `git push`. In order to configure Github to send `push` events from your repository to the Flux webhook receiver you will need two things:
 
-1. Webhook URL - Your webhook receiver will be deployed on `https://flux-receiver.${BOOTSTRAP_CLOUDFLARE_DOMAIN}/hook/:hookId`. In order to find out your hook id you can run the following command:
+1. Webhook URL - Your webhook receiver will be deployed on `https://flux-webhook.${BOOTSTRAP_CLOUDFLARE_DOMAIN}/hook/:hookId`. In order to find out your hook id you can run the following command:
 
     ```sh
-    kubectl -n flux-system get receiver/github-receiver --kubeconfig=./provision/kubeconfig
+    kubectl -n flux-system get receiver/github-receiver
     # NAME              AGE    READY   STATUS
     # github-receiver   6h8m   True    Receiver initialized with URL: /hook/12ebd1e363c641dc3c2e430ecf3cee2b3c7a5ac9e1234506f6f5f3ce1230e123
     ```
@@ -427,13 +424,13 @@ Flux is pull-based by design meaning it will periodically check your git reposit
     So if my domain was `onedr0p.com` the full url would look like this:
 
     ```text
-    https://flux-receiver.onedr0p.com/hook/12ebd1e363c641dc3c2e430ecf3cee2b3c7a5ac9e1234506f6f5f3ce1230e123
+    https://flux-webhook.onedr0p.com/hook/12ebd1e363c641dc3c2e430ecf3cee2b3c7a5ac9e1234506f6f5f3ce1230e123
     ```
 
 2. Webhook secret - Your webhook secret can be found by decrypting the `secret.sops.yaml` using the following command:
 
     ```sh
-    sops -d ./cluster/apps/flux-system/webhooks/github/secret.sops.yaml | yq .stringData.token
+    sops -d ./kubernetes/apps/flux-system/addons/webhooks/github/secret.sops.yaml | yq .stringData.token
     ```
 
     **Note:** Don't forget to update the `BOOTSTRAP_FLUX_GITHUB_WEBHOOK_SECRET` variable in your `.config.env` file so it matches the generated secret if applicable
@@ -468,12 +465,11 @@ The benefits of a public repository include:
 
   1. Generate new SSH key:
       ```sh
-      ssh-keygen -t ecdsa -b 521 -C "github-deploy-key" -f ./cluster/github-deploy-key -q -P ""
+      ssh-keygen -t ecdsa -b 521 -C "github-deploy-key" -f ./kubernetes/bootstrap/github-deploy.key -q -P ""
       ```
   2. Paste public key in the deploy keys section of your repository settings
-  3. Create sops secret in `cluster/flux/flux-system/github-deploy-key.sops.yaml` with the contents of:
+  3. Create sops secret in `./kubernetes/bootstrap/github-deploy-key.sops.yaml` with the contents of:
       ```yaml
-      # yamllint disable
       apiVersion: v1
       kind: Secret
       metadata:
@@ -493,19 +489,18 @@ The benefits of a public repository include:
       ```
   4. Encrypt secret:
       ```sh
-      sops --encrypt --in-place ./cluster/flux/flux-system/github-deploy-key.sops.yaml
+      sops --encrypt --in-place ./kubernetes/bootstrap/github-deploy-key.sops.yaml
       ```
   5. Apply secret to cluster:
       ```sh
-      sops --decrypt cluster/flux/flux-system/github-deploy-key.sops.yaml | kubectl apply -f -
+      sops --decrypt ./kubernetes/bootstrap/github-deploy-key.sops.yaml | kubectl apply -f -
       ```
-  6.  Update `cluster/flux/flux-system/flux-cluster.yaml`:
+  6.  Update `./kubernetes/flux/config/cluster.yaml`:
       ```yaml
-      ---
       apiVersion: source.toolkit.fluxcd.io/v1beta2
       kind: GitRepository
       metadata:
-        name: flux-cluster
+        name: home-kubernetes
         namespace: flux-system
       spec:
         interval: 10m
@@ -528,9 +523,37 @@ The benefits of a public repository include:
   10. Optionally set your repository to Private in your repository settings.
 </details>
 
-## 👉 Troubleshooting
+### 💨 Kubernetes Dashboard
 
-Our [wiki](https://github.com/onedr0p/flux-cluster-template/wiki) (WIP, contributions welcome) is a good place to start troubleshooting issues. If that doesn't cover your issue, come join and say Hi in our community [Discord](https://discord.gg/k8s-at-home).
+Included in your cluster is the [Kubernetes Dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/). Inorder to log into this you will have to get the secret token from the cluster using the command below.
+
+```sh
+kubectl -n monitoring get secret kubernetes-dashboard -o jsonpath='{.data.token}' | base64 -d
+```
+
+You should be able to access the dashboard at `https://kubernetes.${SECRET_DOMAIN}`
+
+## 🐛 Debugging
+
+Below is a general guide on trying to debug an issue with an resource or application. For example, if a workload/resource is not showing up or a pod has started but in a `CrashLoopBackOff` or `Pending` state.
+
+1. Start by checking all Flux Kustomizations and verify they are healthy.
+  - `flux get ks -A`
+2. Then check all the Flux Helm Releases and verify they are healthy.
+  - `flux get hr -A`
+3. Then check the if the pod is present.
+  - `kubectl -n <namespace> get pods`
+4. Then check the logs of the pod if its there.
+  - `kubectl -n <namespace> logs <pod-name> -f`
+
+Note: If a resource exists, running `kubectl -n <namespace> describe <resource> <name>` might give you insight into what the problem(s) could be.
+
+Resolving problems that you have could take some tweaking of your YAML manifests in order to get things working, other times it could be a external factor like permissions on NFS. If you are unable to figure out your problem see the help section below.
+
+## 👉 Help
+
+- Make a post in this repository's GitHub [Discussions](https://github.com/onedr0p/flux-cluster-template/discussions).
+- Start a thread in the `support` or `flux-cluster-template` channel in the [k8s@home](https://discord.gg/k8s-at-home) Discord server.
 
 ## ❔ What's next
 
@@ -540,4 +563,4 @@ The world is your cluster, have at it!
 
 Big shout out to all the authors and contributors to the projects that we are using in this repository.
 
-Community member [@Whazor](https://github.com/whazor) created [this website](https://whazor.github.io/k8s-at-home-search/) as a creative way to search Helm Releases across GitHub. You may use it as a means to get ideas on how to configure an applications' Helm values.
+[@whazor](https://github.com/whazor) created [this website](https://nanne.dev/k8s-at-home-search/) as a creative way to search Helm Releases across GitHub. You may use it as a means to get ideas on how to configure an applications' Helm values.
