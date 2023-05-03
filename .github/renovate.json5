@@ -6,7 +6,6 @@
     ":disableRateLimiting",
     ":dependencyDashboard",
     ":semanticCommits",
-    ":enablePreCommit",
     ":automergeDigest",
     ":automergeBranch",
     "github>haraldkoch/kochhaus-registry//.github/renovate/autoMerge.json5",
@@ -16,13 +15,12 @@
     "github>haraldkoch/kochhaus-registry//.github/renovate/semanticCommits.json5",
     "helpers:pinGitHubActionDigests"
   ],
-  "dependencyDashboard": true,
+  "platform": "github",
+  "onboarding": false,
+  "requireConfig": "optional",
   "dependencyDashboardTitle": "Renovate Dashboard",
   "suppressNotifications": ["prIgnoreNotification"],
-  "rebaseWhen": "conflicted",
-  "pre-commit": {
-    "enabled": true
-  },
+  "ignorePaths": ["archive/**"],
   "timezone": "America/Toronto",
   "flux": {
     "fileMatch": ["kubernetes/.+\\.ya?ml$"]
@@ -31,14 +29,11 @@
     "fileMatch": ["kubernetes/.+\\.ya?ml$"]
   },
   "kubernetes": {
-    "fileMatch": [
-      "ansible/.+\\.ya?ml.j2$",
-      "kubernetes/.+\\.ya?ml$"
-    ]
+    "fileMatch": ["kubernetes/.+\\.ya?ml$"]
   },
   "regexManagers": [
     {
-      "description": "Process various other dependencies",
+      "description": "Process custom dependencies",
       "fileMatch": [
         "ansible/.+\\.ya?ml$",
         "kubernetes/.+\\.ya?ml$"
