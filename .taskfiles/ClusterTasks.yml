@@ -102,3 +102,11 @@ tasks:
     desc: Delete all jobs
     cmds:
       - kubectl delete job -A --all
+
+  coredns:
+    desc: install coredns
+    cmds:
+      - |
+        yq .spec.values {{.KUBERNETES_DIR}}/apps/kube-system/coredns/app/helmrelease.yaml \
+        | helm template -n kube-system coredns coredns/coredns -f - \
+        | kubectl -n kube-system apply -f -
