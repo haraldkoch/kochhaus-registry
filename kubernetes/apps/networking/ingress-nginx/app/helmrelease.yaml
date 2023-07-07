@@ -1,11 +1,12 @@
 ---
+# yaml-language-server: $schema=https://kubernetes-schemas.haraldkoch.ca/helm.toolkit.fluxcd.io/helmrelease_v2beta1.json
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: ingress-nginx
   namespace: networking
 spec:
-  interval: 15m
+  interval: 30m
   chart:
     spec:
       chart: ingress-nginx
@@ -14,7 +15,7 @@ spec:
         kind: HelmRepository
         name: ingress-nginx
         namespace: flux-system
-  maxHistory: 3
+  maxHistory: 2
   install:
     createNamespace: true
     remediation:
@@ -39,36 +40,26 @@ spec:
       ingressClassResource:
         default: true
       config:
-        client-header-timeout: 120
-        client-body-buffer-size: "100M"
+        client-body-buffer-size: 100M
         client-body-timeout: 120
+        client-header-timeout: 120
         custom-http-errors: 400,401,403,404,500,502,503,504
         enable-brotli: "true"
-        forwarded-for-header: "CF-Connecting-IP"
-        hsts-max-age: "31449600"
-        keep-alive: 120
+        hsts-max-age: 31449600
         keep-alive-requests: 10000
-        proxy-body-size: "100M"
-        ssl-protocols: "TLSv1.3 TLSv1.2"
-        use-forwarded-headers: "true"
-        log-format-escape-json: "true"
-        log-format-upstream: >-
-          {"time": "$time_iso8601", "remote_addr": "$proxy_protocol_addr",
-          "x_forwarded_for": "$proxy_add_x_forwarded_for", "request_id": "$req_id",
-          "remote_user": "$remote_user", "bytes_sent": $bytes_sent, "request_time": $request_time,
-          "status": $status, "vhost": "$host", "request_proto": "$server_protocol",
-          "path": "$uri", "request_query": "$args", "request_length": $request_length,
-          "duration": $request_time,"method": "$request_method", "http_referrer": "$http_referer",
-          "http_user_agent": "$http_user_agent"}
+        keep-alive: 120
+        proxy-body-size: 0
+        proxy-buffer-size: 16k
+        ssl-protocols: TLSv1.3 TLSv1.2
       metrics:
         enabled: false
       extraArgs:
         default-ssl-certificate: "networking/${SECRET_DOMAIN/./-}-production-tls"
       podAnnotations:
-        configmap.reloader.stakater.com/reload: cloudflare-networks
+        configmap.reloader.stakater.com/reload: ingress-nginx-controller
       resources:
         requests:
-          cpu: 10m
+          cpu: 100m
           memory: 250Mi
         limits:
           memory: 500Mi
