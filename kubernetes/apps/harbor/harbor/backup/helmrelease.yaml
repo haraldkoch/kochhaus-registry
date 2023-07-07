@@ -9,11 +9,11 @@ spec:
   interval: 30m
   chart:
     spec:
-      chart: raw
-      version: v0.3.1
+      chart: app-template
+      version: 1.5.1
       sourceRef:
         kind: HelmRepository
-        name: dysnix
+        name: bjw-s
         namespace: flux-system
   maxHistory: 2
   install:
@@ -27,56 +27,42 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    resources:
-      - apiVersion: batch/v1
-        kind: CronJob
-        metadata:
-          name: harbor-pgdump
-        spec:
-          schedule: "59 * * * *"
-          concurrencyPolicy: Forbid
-          failedJobsHistoryLimit: 5
-          successfulJobsHistoryLimit: 3
-          jobTemplate:
-            spec:
-              backoffLimit: 0
-              template:
-                spec:
-                  restartPolicy: Never
-                  volumes:
-                    - name: backup
-                      persistentVolumeClaim:
-                        claimName: harbor-pg-backup-v1
-                  containers:
-                    - name: dump
-                      # same image as the postgres cluster
-                      image: goharbor/harbor-db:v2.8.2
-                      command: ["/usr/bin/pg_dumpall"]
-                      args:
-                        - "-f"
-                        - "/backup/harbor.pgdump"
-                        - "-v"
-                        - "-U"
-                        - "postgres"
-                      env:
-                        - name: PGHOST
-                          value: harbor-database
-                        - name: PGPORT
-                          value: "5432"
-                        - name: PGPASSWORD
-                          valueFrom:
-                            secretKeyRef:
-                              name: harbor-database
-                              key: POSTGRES_PASSWORD
-                        - name: TZ
-                          value: ${TIMEZONE}
-                      volumeMounts:
-                        - name: backup
-                          mountPath: /backup
-                      resources:
-                        requests:
-                          memory: "128Mi"
-                          cpu: "1"
-                        limits:
-                          memory: "512Mi"
-                          cpu: "1"
+    controller:
+      type: cronjob
+      cronjob:
+        concurrencyPolicy: Forbid
+        schedule: "59 * * * *"
+    restartPolicy: Never
+    image:
+      repository: docker.io/goharbor/harbor-db
+      tag: v2.8.2
+      command: ["/usr/bin/pg_dumpall"]
+      args:
+        - "-f"
+        - "/backup/harbor.pgdump"
+        - "-v"
+        - "-U"
+        - "postgres"
+      env:
+        - { name: TZ, value: "${TIMEZONE}" }
+        - { name: PGHOST, value: harbor-database }
+        - { name: PGPORT, value: "5432" }
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: harbor-database
+              key: POSTGRES_PASSWORD
+    service:
+      main:
+        enabled: false
+    persistence:
+      backup:
+        enabled: true
+        type: nfs
+        server: ${SECRET_BACKUP_SERVER}
+        path: /backup/data/k8s/harbor
+        mountPath: /backup
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000

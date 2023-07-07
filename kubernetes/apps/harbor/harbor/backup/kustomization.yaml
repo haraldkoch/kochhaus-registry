@@ -4,4 +4,3 @@ kind: Kustomization
 namespace: harbor
 resources:
   - helmrelease.yaml
-  - backup-data-v1.yaml
