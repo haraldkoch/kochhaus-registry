@@ -34,7 +34,7 @@ spec:
     restartPolicy: Never
     image:
       repository: docker.io/goharbor/harbor-db
-      tag: v2.8.2
+      tag: v2.8.3
       command: ["/usr/bin/pg_dumpall"]
       args:
         - "-f"
