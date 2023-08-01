@@ -61,7 +61,3 @@ spec:
         server: ${SECRET_BACKUP_SERVER}
         path: /backup/data/k8s/harbor
         mountPath: /backup
-    podSecurityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
-      fsGroup: 1000
