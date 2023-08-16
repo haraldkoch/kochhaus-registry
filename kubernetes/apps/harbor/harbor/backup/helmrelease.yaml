@@ -35,22 +35,22 @@ spec:
     image:
       repository: docker.io/goharbor/harbor-db
       tag: v2.8.4
-      command: ["/usr/bin/pg_dumpall"]
-      args:
-        - "-f"
-        - "/backup/harbor.pgdump"
-        - "-v"
-        - "-U"
-        - "postgres"
-      env:
-        - { name: TZ, value: "${TIMEZONE}" }
-        - { name: PGHOST, value: harbor-database }
-        - { name: PGPORT, value: "5432" }
-        - name: PGPASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: harbor-database
-              key: POSTGRES_PASSWORD
+    command: ["/usr/bin/pg_dumpall"]
+    args:
+      - "-f"
+      - "/backup/harbor.pgdump"
+      - "-v"
+      - "-U"
+      - "postgres"
+    env:
+      - { name: TZ, value: "${TIMEZONE}" }
+      - { name: PGHOST, value: harbor-database }
+      - { name: PGPORT, value: "5432" }
+      - name: PGPASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: harbor-database
+            key: POSTGRES_PASSWORD
     service:
       main:
         enabled: false
