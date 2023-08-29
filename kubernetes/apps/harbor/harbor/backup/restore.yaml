@@ -16,7 +16,7 @@ spec:
             claimName: harbor-pg-backup-v1
       containers:
         - name: postgres
-          image: goharbor/harbor-db:v2.8.4
+          image: goharbor/harbor-db:v2.9.0
           command: ["/bin/sh"]
           args:
             - "-c"
