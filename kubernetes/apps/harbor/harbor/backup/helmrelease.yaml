@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 1.5.1
+      version: 2.0.3
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -26,38 +26,39 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    controller:
-      type: cronjob
-      cronjob:
-        concurrencyPolicy: Forbid
-        schedule: "59 * * * *"
-    restartPolicy: Never
-    image:
-      repository: docker.io/goharbor/harbor-db
-      tag: v2.9.0
-    command: ["/usr/bin/pg_dumpall"]
-    args:
-      - "-f"
-      - "/backup/harbor.pgdump"
-      - "-v"
-      - "-U"
-      - "postgres"
-    env:
-      - { name: TZ, value: "${TIMEZONE}" }
-      - { name: PGHOST, value: harbor-database }
-      - { name: PGPORT, value: "5432" }
-      - name: PGPASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: harbor-database
-            key: POSTGRES_PASSWORD
-    service:
+    controllers:
       main:
-        enabled: false
+        type: cronjob
+        cronjob:
+          concurrencyPolicy: Forbid
+          schedule: "59 * * * *"
+        containers:
+          main:
+            image:
+              repository: docker.io/goharbor/harbor-db
+              tag: v2.9.0
+              command: ["/usr/bin/pg_dumpall"]
+              args:
+                - "-f"
+                - "/backup/harbor.pgdump"
+                - "-v"
+                - "-U"
+                - "postgres"
+              env:
+                - { name: TZ, value: "${TIMEZONE}" }
+                - { name: PGHOST, value: harbor-database }
+                - { name: PGPORT, value: "5432" }
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: harbor-database
+                      key: POSTGRES_PASSWORD
     persistence:
       backup:
         enabled: true
         type: nfs
         server: ${SECRET_BACKUP_SERVER}
         path: /backup/data/k8s/harbor
-        mountPath: /backup
+    service:
+      main:
+        enabled: false
