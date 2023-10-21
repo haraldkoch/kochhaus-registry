@@ -1,0 +1,107 @@
+{
+  "distSpecVersion": "1.0.1",
+  "storage": {
+    "rootDirectory": "/var/lib/registry",
+    "dedupe": true,
+    "gc": true,
+    "gcDelay": "1h",
+    "gcInterval": "24h"
+  },
+  "http": {
+    "address": "0.0.0.0",
+    "port": "8080",
+    "auth": {
+      "htpasswd": {
+        "path": "/secret/htpasswd"
+      }
+    },
+    "accessControl": {
+      "**": {
+        "policies": [{
+          "users": ["chk"],
+          "actions": ["read", "create", "update"]
+        }],
+        "anonymousPolicy": ["read"],
+        "defaultPolicy": ["read", "create"]
+      },
+      "adminPolicy": {
+        "users": ["admin"],
+        "actions": ["read", "create", "update", "delete"]
+      }
+    }
+  },
+  "log": {
+    "level": "debug"
+  },
+  "extensions": {
+    "scrub": {
+      "enable": true,
+      "interval": "24h"
+    },
+    "sync": {
+      "enable": true,
+      "registries": [
+        {
+          "urls": ["https://docker.io"],
+          "content": [
+            {
+              "prefix": "**",
+              "destination": "/docker.io"
+            }
+          ],
+          "onDemand": true
+        },
+        {
+          "urls": ["https://gcr.io"],
+          "content": [
+            {
+              "prefix": "**",
+              "destination": "/gcr.io"
+            }
+          ],
+          "onDemand": true
+        },
+        {
+          "urls": ["https://ghcr.io"],
+          "content": [
+            {
+              "prefix": "**",
+              "destination": "/ghcr.io"
+            }
+          ],
+          "onDemand": true
+        },
+        {
+          "urls": ["https://public.ecr.aws"],
+          "content": [
+            {
+              "prefix": "**",
+              "destination": "/public.ecr.aws"
+            }
+          ],
+          "onDemand": true
+        },
+        {
+          "urls": ["https://quay.io"],
+          "content": [
+            {
+              "prefix": "**",
+              "destination": "/quay.io"
+            }
+          ],
+          "onDemand": true
+        },
+        {
+          "urls": ["https://registry.k8s.io"],
+          "content": [
+            {
+              "prefix": "**",
+              "destination": "/registry.k8s.io"
+            }
+          ],
+          "onDemand": true
+        }
+      ]
+    }
+  }
+}
