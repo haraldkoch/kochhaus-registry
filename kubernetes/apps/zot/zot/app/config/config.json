@@ -1,11 +1,19 @@
 {
   "distSpecVersion": "1.0.1",
   "storage": {
-    "rootDirectory": "/var/lib/registry",
-    "dedupe": true,
+    "rootDirectory": "/tmp/zot",
+    "dedupe": false,
     "gc": true,
     "gcDelay": "1h",
-    "gcInterval": "24h"
+    "gcInterval": "24h",
+    "storageDriver": {
+      "name": "s3",
+      "rootdirectory": "/zot",
+      "regionendpoint": "http://jezebel:9100",
+      "bucket": "zot",
+      "secure": false,
+      "skipverify": false
+    }
   },
   "http": {
     "address": "0.0.0.0",
