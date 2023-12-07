@@ -3,7 +3,6 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: &name pg-harbor-restore
-  namespace: harbor
 spec:
   ttlSecondsAfterFinished: 86400
   template:
