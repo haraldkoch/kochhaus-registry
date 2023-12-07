@@ -2,7 +2,7 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cluster-apps-harbor
+  name: harbor
   namespace: flux-system
 spec:
   path: ./kubernetes/apps/harbor/harbor/app
@@ -18,7 +18,7 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cluster-apps-harbor-backup
+  name: harbor-backup
   namespace: flux-system
 spec:
   path: ./kubernetes/apps/harbor/harbor/backup
