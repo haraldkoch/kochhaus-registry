@@ -5,15 +5,13 @@ kind: Kustomization
 metadata:
   name: &app coredns
   namespace: flux-system
-  labels:
-    substitution.flux.home.arpa/disabled: "true"
 spec:
   targetNamespace: kube-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
   path: ./kubernetes/apps/kube-system/coredns/app
-  prune: false
+  prune: false # never should be deleted
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
