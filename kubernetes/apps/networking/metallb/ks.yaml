@@ -10,7 +10,7 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   path: ./kubernetes/apps/networking/metallb/app
-  prune: false
+  prune: true
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
@@ -36,7 +36,7 @@ spec:
   dependsOn:
     - name: metallb
   path: ./kubernetes/apps/networking/metallb/config
-  prune: false
+  prune: true
   sourceRef:
     kind: GitRepository
     name: home-kubernetes
