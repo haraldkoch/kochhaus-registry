@@ -50,10 +50,12 @@ spec:
         proxy-body-size: 0
         proxy-buffer-size: 16k
         ssl-protocols: TLSv1.3 TLSv1.2
+        strict-validate-path-type: "true"
       metrics:
         enabled: false
       extraArgs:
-        default-ssl-certificate: "networking/${SECRET_DOMAIN/./-}-production-tls"
+        default-ssl-certificate: networking/${SECRET_DOMAIN/./-}-production-tls
+        enable-annotation-validation: true
       podAnnotations:
         configmap.reloader.stakater.com/reload: ingress-nginx-controller
       resources:
@@ -62,10 +64,3 @@ spec:
           memory: 250Mi
         limits:
           memory: 500Mi
-  valuesFrom:
-    # Cloudflare Networks
-    # https://www.cloudflare.com/ips/
-    - targetPath: controller.config.proxy-real-ip-cidr
-      kind: ConfigMap
-      name: cloudflare-networks
-      valuesKey: cloudflare-networks.txt
