@@ -75,7 +75,7 @@ spec:
       config:
         enabled: true
         type: configMap
-        name: zot-config # overridden by kubeconfig
+        name: zot-config
         globalMounts:
           - path: /etc/zot
       secret:
