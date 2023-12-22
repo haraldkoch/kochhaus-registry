@@ -4,11 +4,11 @@
     "config:recommended",
     "docker:enableMajor",
     "replacements:k8s-registry-move",
+    ":automergeBranch",
     ":disableRateLimiting",
     ":dependencyDashboard",
     ":semanticCommits",
-    ":automergeDigest",
-    ":automergeBranch",
+    ":skipStatusChecks",
     ":timezone(America/Toronto)",
     "github>haraldkoch/kochhaus-registry//.github/renovate/autoMerge.json5",
     "github>haraldkoch/kochhaus-registry//.github/renovate/commitMessage.json5",
@@ -17,21 +17,19 @@
     "github>haraldkoch/kochhaus-registry//.github/renovate/labels.json5",
     "github>haraldkoch/kochhaus-registry//.github/renovate/packageRules.json5",
     "github>haraldkoch/kochhaus-registry//.github/renovate/semanticCommits.json5",
-    "helpers:pinGitHubActionDigests"
   ],
   "onboarding": false,
   "requireConfig": "optional",
   "dependencyDashboardTitle": "Renovate Dashboard",
-  "suppressNotifications": ["prIgnoreNotification"],
-  "vulnerabilityAlerts": {
-    "labels": ["security"],
-    "automerge": true,
-    "automergeType": "branch",
-    "schedule": ["at any time"]
-  },
-  "osvVulnerabilityAlerts": true,
-  "dependencyDashboardOSVVulnerabilitySummary": "all",
-  "ignorePaths": ["**/archive/**"],
+  "suppressNotifications": ["prEditedNotification", "prIgnoreNotification"],
+  "rebaseWhen": "conflicted",
+  "assigneesFromCodeOwners": true,
+  "reviewersFromCodeOwners": true,
+  "ignorePaths": [
+    "**/*.sops.*",
+    "**/archive/**",
+    "**/resources/**"
+  ],
   "flux": {
     "fileMatch": [
       "(^|/)kubernetes/.+\\.ya?ml(\\.j2)?$"
